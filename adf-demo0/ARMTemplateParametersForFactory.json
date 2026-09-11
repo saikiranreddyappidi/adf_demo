@@ -1,0 +1,27 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-demo0"
+		},
+		"AzureDatabricks1_accessToken": {
+			"value": ""
+		},
+		"SourceLinkedService_connectionString": {
+			"value": ""
+		},
+		"TargetLinkedService_connectionString": {
+			"value": ""
+		},
+		"adfDevDatabricks_accessToken": {
+			"value": ""
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"value": "0908-032823-1usxh7du"
+		},
+		"adfDevDatabricks_properties_typeProperties_existingClusterId": {
+			"value": "0909-030019-zck8p8rm"
+		}
+	}
+}

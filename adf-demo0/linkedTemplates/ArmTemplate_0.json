@@ -1,0 +1,1294 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-demo0"
+		},
+		"AzureDatabricks1_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'AzureDatabricks1'"
+		},
+		"SourceLinkedService_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'SourceLinkedService'"
+		},
+		"TargetLinkedService_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'TargetLinkedService'"
+		},
+		"adfDevDatabricks_accessToken": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accessToken' of 'adfDevDatabricks'"
+		},
+		"AzureDatabricks1_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0908-032823-1usxh7du"
+		},
+		"adfDevDatabricks_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0909-030019-zck8p8rm"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricks1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405609166905779.19.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDatabricks1_accessToken')]"
+					},
+					"existingClusterId": "[parameters('AzureDatabricks1_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SourceLinkedService')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('SourceLinkedService_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TargetLinkedService')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('TargetLinkedService_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/adfDevDatabricks')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405606358170797.17.azuredatabricks.net",
+					"accessToken": {
+						"type": "SecureString",
+						"value": "[parameters('adfDevDatabricks_accessToken')]"
+					},
+					"existingClusterId": "[parameters('adfDevDatabricks_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger_15min')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2026-08-23T15:34:00",
+						"timeZone": "India Standard Time"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/chk2')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "demoNotebook",
+						"type": "DatabricksNotebook",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/kiran@digitaledify.ai/demo_adf"
+						},
+						"linkedServiceName": {
+							"referenceName": "adfDevDatabricks",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Notebook1",
+						"type": "DatabricksNotebook",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/kiran@digitaledify.ai/demo"
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Job1",
+						"type": "DatabricksJob",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"jobId": "13480761122994"
+						},
+						"linkedServiceName": {
+							"referenceName": "AzureDatabricks1",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-09-10T03:00:10Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/adfDevDatabricks')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureDatabricks1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SorceDataSet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "results.csv",
+						"container": "raw-data-container"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Prop_0",
+						"type": "String"
+					},
+					{
+						"name": "Reg.No",
+						"type": "String"
+					},
+					{
+						"name": "Name",
+						"type": "String"
+					},
+					{
+						"name": "22CS205",
+						"type": "String"
+					},
+					{
+						"name": "22CS206",
+						"type": "String"
+					},
+					{
+						"name": "22CS207",
+						"type": "String"
+					},
+					{
+						"name": "22CS208",
+						"type": "String"
+					},
+					{
+						"name": "22CS952",
+						"type": "String"
+					},
+					{
+						"name": "22SA202",
+						"type": "String"
+					},
+					{
+						"name": "22TP203",
+						"type": "String"
+					},
+					{
+						"name": "22TP204",
+						"type": "String"
+					},
+					{
+						"name": "22CE851",
+						"type": "String"
+					},
+					{
+						"name": "22BM851",
+						"type": "String"
+					},
+					{
+						"name": "22FT851",
+						"type": "String"
+					},
+					{
+						"name": "22CY951",
+						"type": "String"
+					},
+					{
+						"name": "22NC901",
+						"type": "String"
+					},
+					{
+						"name": "22AH901",
+						"type": "String"
+					},
+					{
+						"name": "22CE906",
+						"type": "String"
+					},
+					{
+						"name": "22SA906",
+						"type": "String"
+					},
+					{
+						"name": "22MS911",
+						"type": "String"
+					},
+					{
+						"name": "22CE853",
+						"type": "String"
+					},
+					{
+						"name": "22BI851",
+						"type": "String"
+					},
+					{
+						"name": "22SA901",
+						"type": "String"
+					},
+					{
+						"name": "22AM951",
+						"type": "String"
+					},
+					{
+						"name": "22TP852",
+						"type": "String"
+					},
+					{
+						"name": "22MS906",
+						"type": "String"
+					},
+					{
+						"name": "22EC858",
+						"type": "String"
+					},
+					{
+						"name": "22MT855",
+						"type": "String"
+					},
+					{
+						"name": "22RA853",
+						"type": "String"
+					},
+					{
+						"name": "22TP908",
+						"type": "String"
+					},
+					{
+						"name": "22EC903",
+						"type": "String"
+					},
+					{
+						"name": "22MS901",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TargetDataSet')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "TargetLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"folderPath": "result",
+						"container": "rawstorage-target-container"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/TargetLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/chkSinkDataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "TargetLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SinkContainerName": {
+						"type": "string",
+						"defaultValue": "rawstorage-target-container"
+					},
+					"SinkFolderPath": {
+						"type": "string"
+					},
+					"SinkFileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().SinkFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().SinkFolderPath",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().SinkContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/TargetLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/chkSourceDataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SourceContainerName": {
+						"type": "string",
+						"defaultValue": "adfdemo0sa"
+					},
+					"SourceFolderPath": {
+						"type": "string"
+					},
+					"SourceFileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().SourceFileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().SourceFolderPath",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().SourceContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_card_transactions')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "card_transactions.csv",
+						"folderPath": "bank",
+						"container": "raw-data-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_cards')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "cards.csv",
+						"folderPath": "bank",
+						"container": "raw-data-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_customers')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "customers.csv",
+						"folderPath": "bank",
+						"container": "raw-data-container"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_sink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "TargetLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/TargetLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "SourceLinkedService",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"ContainerName": {
+						"type": "string"
+					},
+					"FolderPath": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().FolderPath",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().ContainerName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "customers"
+						},
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "cards"
+						},
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "cardtransactions"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "TargetLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "saveData"
+						}
+					],
+					"transformations": [
+						{
+							"name": "avgCreditScore"
+						},
+						{
+							"name": "CustomerCards"
+						},
+						{
+							"name": "customersWithCards"
+						},
+						{
+							"name": "cardsSummary"
+						},
+						{
+							"name": "customersTransactionsUsingCards"
+						},
+						{
+							"name": "onlyRequiredColumns"
+						},
+						{
+							"name": "stateBasedSummary"
+						},
+						{
+							"name": "fraudSorting"
+						},
+						{
+							"name": "dividingTransactions"
+						},
+						{
+							"name": "pivot1"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     startTime as date,",
+						"     endTime as date",
+						"}",
+						"source(output(",
+						"          customer_id as short,",
+						"          name as string,",
+						"          gender as string,",
+						"          date_of_birth as date,",
+						"          city as string,",
+						"          state as string,",
+						"          phone as long,",
+						"          email as string,",
+						"          occupation as string,",
+						"          annual_income as integer,",
+						"          join_date as date,",
+						"          credit_score as short",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'customers.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> customers",
+						"source(output(",
+						"          card_id as short,",
+						"          customer_id as integer,",
+						"          account_id as integer,",
+						"          card_type as string,",
+						"          issue_date as date,",
+						"          expiry_date as date,",
+						"          credit_limit as integer,",
+						"          status as string",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'cards.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> cards",
+						"source(output(",
+						"          card_txn_id as short,",
+						"          card_id as integer,",
+						"          txn_date as date,",
+						"          merchant_category as string,",
+						"          amount as double,",
+						"          is_fraud as boolean",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'card_transactions.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> cardtransactions",
+						"customers aggregate(groupBy(occupation,",
+						"          gender),",
+						"     annual_income = avg(annual_income),",
+						"          credit_score = avg(credit_score)) ~> avgCreditScore",
+						"customers, cards join(customers@customer_id == cards@customer_id,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> CustomerCards",
+						"CustomerCards filter(not(isNull(card_id))) ~> customersWithCards",
+						"CustomerCards aggregate(groupBy(state),",
+						"     total = count(customers@customer_id),",
+						"          havingCard = countIf(not(isNull(card_id)), customers@customer_id),",
+						"          noCard = countIf(isNull(card_id), customers@customer_id)) ~> cardsSummary",
+						"customersWithCards, cardtransactions join(cards@card_id == cardtransactions@card_id,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'left')~> customersTransactionsUsingCards",
+						"customersTransactionsUsingCards select(mapColumn(",
+						"          customer_id = customers@customer_id,",
+						"          name,",
+						"          gender,",
+						"          city,",
+						"          state,",
+						"          email,",
+						"          occupation,",
+						"          annual_income,",
+						"          credit_score,",
+						"          card_id = cards@card_id,",
+						"          card_type,",
+						"          credit_limit,",
+						"          status,",
+						"          card_txn_id,",
+						"          merchant_category,",
+						"          amount,",
+						"          is_fraud",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> onlyRequiredColumns",
+						"onlyRequiredColumns aggregate(groupBy(state),",
+						"     noOfTransactions = countDistinct(card_txn_id),",
+						"          fundMovement = sum(amount),",
+						"          highestFundTransfer = max(amount),",
+						"          fraudulentTransactions = countIf(is_fraud, card_txn_id),",
+						"          fradulentFundMovement = sumIf(is_fraud, amount)) ~> stateBasedSummary",
+						"stateBasedSummary sort(desc(fradulentFundMovement, false)) ~> fraudSorting",
+						"onlyRequiredColumns split(isNull(is_fraud),",
+						"     disjoint: false) ~> dividingTransactions@(legitimateTransactions, fradulentTransactions)",
+						"dividingTransactions@legitimateTransactions pivot(groupBy(state),",
+						"     pivotBy(gender),",
+						"     amount = sum(amount),",
+						"     columnNaming: '$N$V',",
+						"     lateral: true) ~> pivot1",
+						"fraudSorting sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'delimited',",
+						"     container: 'rawstorage-target-container',",
+						"     folderPath: 'result',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     saveOrder: 1) ~> saveData"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]",
+				"[concat(variables('factoryId'), '/linkedServices/TargetLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/frauddetect')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "customers"
+						},
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "cards"
+						},
+						{
+							"linkedService": {
+								"referenceName": "SourceLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "cardtransactions"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "TargetLinkedService",
+								"type": "LinkedServiceReference"
+							},
+							"name": "outputcustomerid",
+							"rejectedDataLinkedService": {
+								"referenceName": "TargetLinkedService",
+								"type": "LinkedServiceReference"
+							}
+						}
+					],
+					"transformations": [
+						{
+							"name": "join1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          customer_id as short,",
+						"          name as string,",
+						"          gender as string,",
+						"          date_of_birth as date,",
+						"          city as string,",
+						"          state as string,",
+						"          phone as long,",
+						"          email as string,",
+						"          occupation as string,",
+						"          annual_income as integer,",
+						"          join_date as date,",
+						"          credit_score as short",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'customers.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> customers",
+						"source(output(",
+						"          card_id as short,",
+						"          customer_id as integer,",
+						"          account_id as integer,",
+						"          card_type as string,",
+						"          issue_date as date,",
+						"          expiry_date as date,",
+						"          credit_limit as integer,",
+						"          status as string",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'cards.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> cards",
+						"source(output(",
+						"          card_txn_id as short,",
+						"          card_id as integer,",
+						"          txn_date as date,",
+						"          merchant_category as string,",
+						"          amount as double,",
+						"          is_fraud as boolean",
+						"     ),",
+						"     useSchema: false,",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'delimited',",
+						"     container: 'raw-data-container',",
+						"     folderPath: 'bank',",
+						"     fileName: 'card_transactions.csv',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: true) ~> cardtransactions",
+						"customers, cards join(customers@customer_id == cards@customer_id,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'delimited',",
+						"     container: 'rawstorage-target-container',",
+						"     folderPath: 'adf_sink',",
+						"     columnDelimiter: ',',",
+						"     escapeChar: '\\\\',",
+						"     quoteChar: '\\\"',",
+						"     columnNamesAsHeader: false,",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> outputcustomerid"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/SourceLinkedService')]",
+				"[concat(variables('factoryId'), '/linkedServices/TargetLinkedService')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Dileep_data')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SorceDataSet",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "TargetDataSet",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-09-09T16:38:13Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SorceDataSet')]",
+				"[concat(variables('factoryId'), '/datasets/TargetDataSet')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Sai Kumar_Practice')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "chkSourceDataset",
+								"type": "DatasetReference",
+								"parameters": {
+									"SourceContainerName": "adfdemo0sa",
+									"SourceFolderPath": {
+										"value": "@pipeline().parameters.Source_Folder",
+										"type": "Expression"
+									},
+									"SourceFileName": {
+										"value": "@pipeline().parameters.File_Name",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "chkSinkDataset",
+								"type": "DatasetReference",
+								"parameters": {
+									"SinkContainerName": "rawstorage-target-container",
+									"SinkFolderPath": {
+										"value": "@pipeline().parameters.Destination_Folder",
+										"type": "Expression"
+									},
+									"SinkFileName": {
+										"value": "@pipeline().parameters.File_Name",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Source_Folder": {
+						"type": "string"
+					},
+					"File_Name": {
+						"type": "string"
+					},
+					"Destination_Folder": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-09-02T02:45:54Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/chkSourceDataset')]",
+				"[concat(variables('factoryId'), '/datasets/chkSinkDataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Shruti_CopyDataFlow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "SorceDataSet",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "TargetDataSet",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"sourcefolder": {
+						"type": "string"
+					},
+					"sinkfolder": {
+						"type": "string"
+					},
+					"filename": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-09-01T04:19:12Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SorceDataSet')]",
+				"[concat(variables('factoryId'), '/datasets/TargetDataSet')]"
+			]
+		}
+	]
+}
