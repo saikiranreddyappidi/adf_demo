@@ -1,0 +1,101 @@
+{
+	"name": "Sai Kumar_Practice",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "chkSourceDataset",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceContainerName": "adfdemo0sa",
+							"SourceFolderPath": {
+								"value": "@pipeline().parameters.Source_Folder",
+								"type": "Expression"
+							},
+							"SourceFileName": {
+								"value": "@pipeline().parameters.File_Name",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "chkSinkDataset",
+						"type": "DatasetReference",
+						"parameters": {
+							"SinkContainerName": "rawstorage-target-container",
+							"SinkFolderPath": {
+								"value": "@pipeline().parameters.Destination_Folder",
+								"type": "Expression"
+							},
+							"SinkFileName": {
+								"value": "@pipeline().parameters.File_Name",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"Source_Folder": {
+				"type": "string"
+			},
+			"File_Name": {
+				"type": "string"
+			},
+			"Destination_Folder": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-02T02:45:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

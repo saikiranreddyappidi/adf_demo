@@ -1,0 +1,153 @@
+{
+	"name": "SorceDataSet",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SourceLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "results.csv",
+				"container": "raw-data-container"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Prop_0",
+				"type": "String"
+			},
+			{
+				"name": "Reg.No",
+				"type": "String"
+			},
+			{
+				"name": "Name",
+				"type": "String"
+			},
+			{
+				"name": "22CS205",
+				"type": "String"
+			},
+			{
+				"name": "22CS206",
+				"type": "String"
+			},
+			{
+				"name": "22CS207",
+				"type": "String"
+			},
+			{
+				"name": "22CS208",
+				"type": "String"
+			},
+			{
+				"name": "22CS952",
+				"type": "String"
+			},
+			{
+				"name": "22SA202",
+				"type": "String"
+			},
+			{
+				"name": "22TP203",
+				"type": "String"
+			},
+			{
+				"name": "22TP204",
+				"type": "String"
+			},
+			{
+				"name": "22CE851",
+				"type": "String"
+			},
+			{
+				"name": "22BM851",
+				"type": "String"
+			},
+			{
+				"name": "22FT851",
+				"type": "String"
+			},
+			{
+				"name": "22CY951",
+				"type": "String"
+			},
+			{
+				"name": "22NC901",
+				"type": "String"
+			},
+			{
+				"name": "22AH901",
+				"type": "String"
+			},
+			{
+				"name": "22CE906",
+				"type": "String"
+			},
+			{
+				"name": "22SA906",
+				"type": "String"
+			},
+			{
+				"name": "22MS911",
+				"type": "String"
+			},
+			{
+				"name": "22CE853",
+				"type": "String"
+			},
+			{
+				"name": "22BI851",
+				"type": "String"
+			},
+			{
+				"name": "22SA901",
+				"type": "String"
+			},
+			{
+				"name": "22AM951",
+				"type": "String"
+			},
+			{
+				"name": "22TP852",
+				"type": "String"
+			},
+			{
+				"name": "22MS906",
+				"type": "String"
+			},
+			{
+				"name": "22EC858",
+				"type": "String"
+			},
+			{
+				"name": "22MT855",
+				"type": "String"
+			},
+			{
+				"name": "22RA853",
+				"type": "String"
+			},
+			{
+				"name": "22TP908",
+				"type": "String"
+			},
+			{
+				"name": "22EC903",
+				"type": "String"
+			},
+			{
+				"name": "22MS901",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

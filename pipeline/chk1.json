@@ -1,0 +1,290 @@
+{
+	"name": "chk1",
+	"properties": {
+		"activities": [
+			{
+				"name": "UntilFileArrives",
+				"type": "Until",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@or(variables('FileFound'), lessOrEquals(variables('RetryCount'), pipeline().parameters.MaxRetries))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "GetMetaSingleFile",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "chkSourceDataset",
+									"type": "DatasetReference",
+									"parameters": {
+										"SourceContainerName": {
+											"value": "@pipeline().parameters.SourceContainer",
+											"type": "Expression"
+										},
+										"SourceFolderPath": {
+											"value": "@pipeline().parameters.SourceFolder",
+											"type": "Expression"
+										},
+										"SourceFileName": {
+											"value": "@pipeline().parameters.FileName",
+											"type": "Expression"
+										}
+									}
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							}
+						},
+						{
+							"name": "IfFileExistsNow",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "GetMetaSingleFile",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('GetMetaSingleFile').output.exists",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "ComputeNextRetry",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "NextRetryCount",
+											"value": {
+												"value": "@add(variables('RetryCount'), 1)",
+												"type": "Expression"
+											}
+										}
+									},
+									{
+										"name": "WaitTwoMinutes",
+										"type": "Wait",
+										"dependsOn": [
+											{
+												"activity": "AssignRetryCount",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"userProperties": [],
+										"typeProperties": {
+											"waitTimeInSeconds": 5
+										}
+									},
+									{
+										"name": "AssignRetryCount",
+										"type": "SetVariable",
+										"dependsOn": [
+											{
+												"activity": "ComputeNextRetry",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "RetryCount",
+											"value": {
+												"value": "@variables('NextRetryCount')",
+												"type": "Expression"
+											}
+										}
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "SetFileFoundTrue",
+										"type": "SetVariable",
+										"dependsOn": [],
+										"policy": {
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"variableName": "FileFound",
+											"value": true
+										}
+									},
+									{
+										"name": "CopySingleFile",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "SetFileFoundTrue",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobStorageReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "DelimitedTextSink",
+												"storeSettings": {
+													"type": "AzureBlobStorageWriteSettings"
+												},
+												"formatSettings": {
+													"type": "DelimitedTextWriteSettings",
+													"quoteAllText": true,
+													"fileExtension": ".txt"
+												}
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "chkSourceDataset",
+												"type": "DatasetReference",
+												"parameters": {
+													"SourceContainerName": {
+														"value": "@pipeline().parameters.SourceContainer",
+														"type": "Expression"
+													},
+													"SourceFolderPath": {
+														"value": "@pipeline().parameters.SourceFolder",
+														"type": "Expression"
+													},
+													"SourceFileName": {
+														"value": "@pipeline().parameters.FileName",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "chkSinkDataset",
+												"type": "DatasetReference",
+												"parameters": {
+													"SinkContainerName": {
+														"value": "@pipeline().parameters.SinkContainer",
+														"type": "Expression"
+													},
+													"SinkFolderPath": {
+														"value": "@pipeline().parameters.SinkFolder",
+														"type": "Expression"
+													},
+													"SinkFileName": {
+														"value": "@pipeline().parameters.FileName",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			}
+		],
+		"parameters": {
+			"SourceContainer": {
+				"type": "string"
+			},
+			"SourceFolder": {
+				"type": "string"
+			},
+			"FileName": {
+				"type": "string"
+			},
+			"SinkContainer": {
+				"type": "string"
+			},
+			"SinkFolder": {
+				"type": "string"
+			},
+			"MaxRetries": {
+				"type": "int",
+				"defaultValue": 5
+			}
+		},
+		"variables": {
+			"FileFound": {
+				"type": "Boolean"
+			},
+			"RetryCount": {
+				"type": "Integer",
+				"defaultValue": 0
+			},
+			"NextRetryCount": {
+				"type": "Integer",
+				"defaultValue": 0
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-09-01T18:50:57Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

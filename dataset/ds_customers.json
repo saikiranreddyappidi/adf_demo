@@ -1,0 +1,20 @@
+{
+	"name": "ds_customers",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "SourceLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "customers.csv",
+				"folderPath": "bank",
+				"container": "raw-data-container"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

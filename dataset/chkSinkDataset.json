@@ -1,0 +1,46 @@
+{
+	"name": "chkSinkDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "TargetLinkedService",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"SinkContainerName": {
+				"type": "string",
+				"defaultValue": "rawstorage-target-container"
+			},
+			"SinkFolderPath": {
+				"type": "string"
+			},
+			"SinkFileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().SinkFileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().SinkFolderPath",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().SinkContainerName",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

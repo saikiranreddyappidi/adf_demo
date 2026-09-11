@@ -1,0 +1,58 @@
+{
+	"name": "parent",
+	"properties": {
+		"activities": [
+			{
+				"name": "RunCopyMultipleFiles",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "chk1",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"SourceContainer": {
+							"value": "@pipeline().parameters.SourceContainer",
+							"type": "Expression"
+						},
+						"SourceFolder": {
+							"value": "@pipeline().parameters.SourceFolder",
+							"type": "Expression"
+						},
+						"SinkContainer": {
+							"value": "@pipeline().parameters.SinkContainer",
+							"type": "Expression"
+						},
+						"SinkFolder": {
+							"value": "@pipeline().parameters.SinkFolder",
+							"type": "Expression"
+						}
+					}
+				}
+			}
+		],
+		"parameters": {
+			"SourceContainer": {
+				"type": "string"
+			},
+			"SourceFolder": {
+				"type": "string"
+			},
+			"SinkContainer": {
+				"type": "string"
+			},
+			"SinkFolder": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-08-24T20:48:40Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

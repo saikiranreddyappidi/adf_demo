@@ -1,0 +1,212 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "customers"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cards"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cardtransactions"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "saveData"
+				}
+			],
+			"transformations": [
+				{
+					"name": "avgCreditScore"
+				},
+				{
+					"name": "CustomerCards"
+				},
+				{
+					"name": "customersWithCards"
+				},
+				{
+					"name": "cardsSummary"
+				},
+				{
+					"name": "customersTransactionsUsingCards"
+				},
+				{
+					"name": "onlyRequiredColumns"
+				},
+				{
+					"name": "stateBasedSummary"
+				},
+				{
+					"name": "fraudSorting"
+				},
+				{
+					"name": "dividingTransactions"
+				},
+				{
+					"name": "pivot1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     startTime as date,",
+				"     endTime as date",
+				"}",
+				"source(output(",
+				"          customer_id as short,",
+				"          name as string,",
+				"          gender as string,",
+				"          date_of_birth as date,",
+				"          city as string,",
+				"          state as string,",
+				"          phone as long,",
+				"          email as string,",
+				"          occupation as string,",
+				"          annual_income as integer,",
+				"          join_date as date,",
+				"          credit_score as short",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'customers.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> customers",
+				"source(output(",
+				"          card_id as short,",
+				"          customer_id as integer,",
+				"          account_id as integer,",
+				"          card_type as string,",
+				"          issue_date as date,",
+				"          expiry_date as date,",
+				"          credit_limit as integer,",
+				"          status as string",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'cards.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cards",
+				"source(output(",
+				"          card_txn_id as short,",
+				"          card_id as integer,",
+				"          txn_date as date,",
+				"          merchant_category as string,",
+				"          amount as double,",
+				"          is_fraud as boolean",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'card_transactions.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cardtransactions",
+				"customers aggregate(groupBy(occupation,",
+				"          gender),",
+				"     annual_income = avg(annual_income),",
+				"          credit_score = avg(credit_score)) ~> avgCreditScore",
+				"customers, cards join(customers@customer_id == cards@customer_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> CustomerCards",
+				"CustomerCards filter(not(isNull(card_id))) ~> customersWithCards",
+				"CustomerCards aggregate(groupBy(state),",
+				"     total = count(customers@customer_id),",
+				"          havingCard = countIf(not(isNull(card_id)), customers@customer_id),",
+				"          noCard = countIf(isNull(card_id), customers@customer_id)) ~> cardsSummary",
+				"customersWithCards, cardtransactions join(cards@card_id == cardtransactions@card_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'left')~> customersTransactionsUsingCards",
+				"customersTransactionsUsingCards select(mapColumn(",
+				"          customer_id = customers@customer_id,",
+				"          name,",
+				"          gender,",
+				"          city,",
+				"          state,",
+				"          email,",
+				"          occupation,",
+				"          annual_income,",
+				"          credit_score,",
+				"          card_id = cards@card_id,",
+				"          card_type,",
+				"          credit_limit,",
+				"          status,",
+				"          card_txn_id,",
+				"          merchant_category,",
+				"          amount,",
+				"          is_fraud",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> onlyRequiredColumns",
+				"onlyRequiredColumns aggregate(groupBy(state),",
+				"     noOfTransactions = countDistinct(card_txn_id),",
+				"          fundMovement = sum(amount),",
+				"          highestFundTransfer = max(amount),",
+				"          fraudulentTransactions = countIf(is_fraud, card_txn_id),",
+				"          fradulentFundMovement = sumIf(is_fraud, amount)) ~> stateBasedSummary",
+				"stateBasedSummary sort(desc(fradulentFundMovement, false)) ~> fraudSorting",
+				"onlyRequiredColumns split(isNull(is_fraud),",
+				"     disjoint: false) ~> dividingTransactions@(legitimateTransactions, fradulentTransactions)",
+				"dividingTransactions@legitimateTransactions pivot(groupBy(state),",
+				"     pivotBy(gender),",
+				"     amount = sum(amount),",
+				"     columnNaming: '$N$V',",
+				"     lateral: true) ~> pivot1",
+				"fraudSorting sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delimited',",
+				"     container: 'rawstorage-target-container',",
+				"     folderPath: 'result',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     saveOrder: 1) ~> saveData"
+			]
+		}
+	}
+}

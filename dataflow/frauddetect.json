@@ -1,0 +1,135 @@
+{
+	"name": "frauddetect",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "customers"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cards"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cardtransactions"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "outputcustomerid",
+					"rejectedDataLinkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "join1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          customer_id as short,",
+				"          name as string,",
+				"          gender as string,",
+				"          date_of_birth as date,",
+				"          city as string,",
+				"          state as string,",
+				"          phone as long,",
+				"          email as string,",
+				"          occupation as string,",
+				"          annual_income as integer,",
+				"          join_date as date,",
+				"          credit_score as short",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'customers.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> customers",
+				"source(output(",
+				"          card_id as short,",
+				"          customer_id as integer,",
+				"          account_id as integer,",
+				"          card_type as string,",
+				"          issue_date as date,",
+				"          expiry_date as date,",
+				"          credit_limit as integer,",
+				"          status as string",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'cards.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cards",
+				"source(output(",
+				"          card_txn_id as short,",
+				"          card_id as integer,",
+				"          txn_date as date,",
+				"          merchant_category as string,",
+				"          amount as double,",
+				"          is_fraud as boolean",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'card_transactions.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cardtransactions",
+				"customers, cards join(customers@customer_id == cards@customer_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delimited',",
+				"     container: 'rawstorage-target-container',",
+				"     folderPath: 'adf_sink',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: false,",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> outputcustomerid"
+			]
+		}
+	}
+}

@@ -1,0 +1,235 @@
+{
+	"name": "fraudReportingPipeline",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "customers"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cards"
+				},
+				{
+					"linkedService": {
+						"referenceName": "SourceLinkedService",
+						"type": "LinkedServiceReference"
+					},
+					"name": "cardTransactions"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "TargetDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "saveStateReports",
+					"rejectedDataLinkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					}
+				},
+				{
+					"dataset": {
+						"referenceName": "TargetDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "legitimateTransactionsSaving",
+					"rejectedDataLinkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					}
+				},
+				{
+					"dataset": {
+						"referenceName": "TargetDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "fradulentTransactions",
+					"rejectedDataLinkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					}
+				},
+				{
+					"dataset": {
+						"referenceName": "TargetDataSet",
+						"type": "DatasetReference"
+					},
+					"name": "transposedData",
+					"rejectedDataLinkedService": {
+						"referenceName": "TargetLinkedService",
+						"type": "LinkedServiceReference"
+					}
+				}
+			],
+			"transformations": [
+				{
+					"name": "customerCards"
+				},
+				{
+					"name": "customersWithActiveCards"
+				},
+				{
+					"name": "requiredColumns"
+				},
+				{
+					"name": "customersWithTransactions"
+				},
+				{
+					"name": "stateLevelReporting"
+				},
+				{
+					"name": "validTransactions"
+				},
+				{
+					"name": "seperatingTransactions"
+				},
+				{
+					"name": "transpose"
+				},
+				{
+					"name": "priorityLabeling"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          customer_id as short,",
+				"          name as string,",
+				"          gender as string,",
+				"          date_of_birth as date,",
+				"          city as string,",
+				"          state as string,",
+				"          phone as long,",
+				"          email as string,",
+				"          occupation as string,",
+				"          annual_income as integer,",
+				"          join_date as date,",
+				"          credit_score as short",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'customers.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> customers",
+				"source(output(",
+				"          card_id as short,",
+				"          customer_id as integer,",
+				"          account_id as integer,",
+				"          card_type as string,",
+				"          issue_date as date,",
+				"          expiry_date as date,",
+				"          credit_limit as integer,",
+				"          status as string",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'cards.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cards",
+				"source(output(",
+				"          card_txn_id as short,",
+				"          card_id as integer,",
+				"          txn_date as date,",
+				"          merchant_category as string,",
+				"          amount as double,",
+				"          is_fraud as boolean",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     container: 'raw-data-container',",
+				"     folderPath: 'bank',",
+				"     fileName: 'card_transactions.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> cardTransactions",
+				"customers, cards join(customers@customer_id == cards@customer_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> customerCards",
+				"customerCards filter(and(not(isNull(card_id)), equals('Active', status))) ~> customersWithActiveCards",
+				"customersWithActiveCards select(mapColumn(",
+				"          customer_id = customers@customer_id,",
+				"          gender,",
+				"          state,",
+				"          card_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> requiredColumns",
+				"cardTransactions, requiredColumns join(cardTransactions@card_id == requiredColumns@card_id,",
+				"     joinType:'right',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> customersWithTransactions",
+				"validTransactions aggregate(groupBy(state,",
+				"          gender),",
+				"     totalFundMovement = sum(amount),",
+				"          totalTransactions = count(card_txn_id),",
+				"          fraudulentTransactions = countIf(is_fraud, card_txn_id),",
+				"          fraudulentAmount = sumIf(is_fraud, amount)) ~> stateLevelReporting",
+				"customersWithTransactions filter(not(isNull(card_txn_id))) ~> validTransactions",
+				"validTransactions split(isNull(is_fraud),",
+				"     disjoint: false) ~> seperatingTransactions@(legitimateTransactions, fraudulentTransactions)",
+				"validTransactions pivot(groupBy(state,",
+				"          is_fraud),",
+				"     pivotBy(gender),",
+				"     Amount = sum(amount),",
+				"     columnNaming: '$N$V',",
+				"     lateral: true) ~> transpose",
+				"seperatingTransactions@fraudulentTransactions derive(priority = case(greaterOrEqual(amount, 100000), \"high\", \"low\")) ~> priorityLabeling",
+				"stateLevelReporting sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['stateRports'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> saveStateReports",
+				"seperatingTransactions@legitimateTransactions sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['legitimateTransactions'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> legitimateTransactionsSaving",
+				"priorityLabeling sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['fradulentTransactions'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> fradulentTransactions",
+				"transpose sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['transposedData'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> transposedData"
+			]
+		}
+	}
+}
