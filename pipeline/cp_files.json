@@ -1,0 +1,99 @@
+{
+	"name": "cp_files",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy File",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "Source_DS",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFolder": {
+								"value": "@pipeline().parameters.PP_SourceFolder",
+								"type": "Expression"
+							},
+							"SourceFileName": {
+								"value": "@pipeline().parameters.PP_SourceFileName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "Target_DS",
+						"type": "DatasetReference",
+						"parameters": {
+							"TargetFolder": {
+								"value": "@pipeline().parameters.PP_TargetFolder",
+								"type": "Expression"
+							},
+							"TargetFileName": {
+								"value": "@concat(pipeline().parameters.PP_SourceFolder,'_',pipeline().parameters.PP_SourceFileName)",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"PP_SourceFolder": {
+				"type": "string"
+			},
+			"PP_SourceFileName": {
+				"type": "string"
+			},
+			"PP_TargetFolder": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-21T03:49:21Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

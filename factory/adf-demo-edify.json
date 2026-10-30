@@ -1,0 +1,15 @@
+{
+	"name": "adf-demo-edify",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "9b7f83ef-5ae7-4d3e-85b6-21898188fd4f",
+		"tenantId": "2db7c3be-27dd-42fc-ab75-ce4050284b91"
+	}
+}

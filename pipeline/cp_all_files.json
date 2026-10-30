@@ -1,0 +1,189 @@
+{
+	"name": "cp_all_files",
+	"properties": {
+		"description": "Copy all files in a given folder",
+		"activities": [
+			{
+				"name": "GetMetadataOfFiles",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "Source_DS",
+						"type": "DatasetReference",
+						"parameters": {
+							"SourceFolder": {
+								"value": "@pipeline().parameters.PP_SourceFolder",
+								"type": "Expression"
+							},
+							"SourceFileName": "*"
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "init count",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "GetMetadataOfFiles",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "CopiedFileCount",
+					"value": 0
+				}
+			},
+			{
+				"name": "ForEachFile",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "init count",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('GetMetadataOfFiles').output.childItems",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Copy File",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"modifiedDatetimeStart": {
+											"value": "@startOfDay(utcNow())",
+											"type": "Expression"
+										},
+										"modifiedDatetimeEnd": {
+											"value": "@startOfDay(adddays(utcNow(),1))",
+											"type": "Expression"
+										},
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobStorageWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "Source_DS",
+									"type": "DatasetReference",
+									"parameters": {
+										"SourceFolder": {
+											"value": "@pipeline().parameters.PP_SourceFolder",
+											"type": "Expression"
+										},
+										"SourceFileName": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "Target_DS",
+									"type": "DatasetReference",
+									"parameters": {
+										"TargetFolder": {
+											"value": "@concat(pipeline().parameters.PP_SourceFolder,'_snapshot')",
+											"type": "Expression"
+										},
+										"TargetFileName": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PP_SourceFolder": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"CopiedFileCount": {
+				"type": "Integer"
+			},
+			"CurrentFileName": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-10-23T14:26:16Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

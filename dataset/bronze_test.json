@@ -1,0 +1,31 @@
+{
+	"name": "bronze_test",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "fordatabricksexternal_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "part-00000-2a8d17fc-960c-40da-9373-d4f58a51ab59.c000.snappy.parquet",
+				"folderPath": "bronze/test",
+				"container": "databricks-container"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "id",
+				"type": "INT_32"
+			},
+			{
+				"name": "name",
+				"type": "UTF8"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
