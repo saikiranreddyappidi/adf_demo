@@ -1185,6 +1185,38 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/fordatabricksexternal_ls')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/tumbling_trigger')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipeline": {
+					"pipelineReference": {
+						"referenceName": "pipeline1",
+						"type": "PipelineReference"
+					},
+					"parameters": {}
+				},
+				"type": "TumblingWindowTrigger",
+				"typeProperties": {
+					"frequency": "Month",
+					"interval": 1,
+					"startTime": "2023-12-31T00:00:00Z",
+					"endTime": "2026-10-31T04:49:00Z",
+					"delay": "00:00:00",
+					"maxConcurrency": 50,
+					"retryPolicy": {
+						"intervalInSeconds": 30
+					},
+					"dependsOn": []
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pipeline1')]"
+			]
 		}
 	]
 }
